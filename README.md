@@ -7,13 +7,16 @@ Aplikasi persuratan sekolah (surat masuk, surat keluar, disposisi, tahun ajaran,
 - `supabase-schema.sql`: tabel dan kebijakan akses Supabase
 
 ## Pasang
-1. Supabase: buka SQL Editor, tempel isi `supabase-schema.sql`, lalu Run.
+1. Supabase: buka SQL Editor, tempel isi `supabase-schema.sql` (termasuk bagian Storage untuk gambar), lalu Run.
 2. GitHub: buat repository baru, unggah `index.html` dan `README.md` (dan `supabase-schema.sql` bila mau).
 3. GitHub Pages: Settings > Pages > Source: Deploy from a branch > Branch: `main`, folder `/ (root)` > Save.
 4. Buka alamat `https://NAMA-AKUN.github.io/NAMA-REPO/`. Status sambungan tampil di bawah judul aplikasi.
 
 ## Ganti koneksi Supabase
 Di `index.html`, cari `SB_URL` dan `SB_KEY`, lalu ganti dengan alamat proyek dan kunci publishable Anda.
+
+## Kop surat dan tanda tangan
+Di Portal admin, unggah kop surat, tanda tangan Kepala Sekolah, dan tanda tangan petugas TU. Gambar disimpan di Supabase Storage (bucket `surat-tu`) dan disalin di perangkat agar cetak tetap jalan offline.
 
 ## Portal admin
 Kata sandi bawaan `admin123`. Cari `admin123` di `index.html` untuk menggantinya. Kata sandi ini tampil di kode halaman, jadi hanya pengaman ringan.
