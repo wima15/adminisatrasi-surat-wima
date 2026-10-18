@@ -131,7 +131,7 @@ label{font-size:13px;font-weight:700;display:grid;gap:4px}
   </div></div>
   <div class="acts">
     <button class="btn" id="btnAdmin">Portal admin</button>
-    <button class="btn" id="btnCsv">Unduh CSV</button>
+    <button class="btn" id="btnCsv">Unduh Excel</button>
     <button class="btn" id="btnPrint">Cetak</button>
     <button class="btn primary" id="btnAdd">Catat surat</button>
   </div>
@@ -203,6 +203,7 @@ label{font-size:13px;font-weight:700;display:grid;gap:4px}
 <div id="aList"></div>
 <div class="arow"><input id="aName" placeholder="Jenis baru, misal Surat Dispensasi" aria-label="Nama jenis baru"><input id="aKode" placeholder="Kode, misal 07" aria-label="Kode jenis baru"><input id="aPad" type="number" min="1" max="6" value="3" aria-label="Digit"><input id="aSeq" type="number" min="0" value="0" aria-label="Nomor terakhir"><button class="btn primary sm" id="aAdd">Tambah</button></div>
 <div class="fbtn"><button class="btn" id="aLock">Kunci dan keluar</button><button class="btn primary" id="aClose">Selesai</button></div></div></dialog>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <div id="lembar"></div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -350,11 +351,28 @@ $("fStatus").addEventListener("change",render);
 $("btnPrint").onclick=function(){window.print()};
 
 $("btnCsv").onclick=function(){
-  var head=["Tahun ajaran","Jenis","Nomor","Tanggal","Pihak","Perihal","Kategori","Status","Disposisi ke","Catatan disposisi"];
-  var c=function(v){return'"'+String(v==null?"":v).replace(/"/g,'""')+'"'};
-  var csv="\ufeff"+[head.map(c).join(",")].concat(S.items.map(function(i){return[i.ta,i.type,i.no,i.tgl,i.pihak,i.perihal,i.kat,i.status,i.dTo,i.dNote].map(c).join(",")})).join("\r\n");
-  try{var a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="buku-surat.csv";document.body.appendChild(a);a.click();a.remove()}catch(e){}
-  toast("Menyiapkan CSV");
+if(!window.ExcelJS){toast("Library Excel belum termuat. Periksa koneksi internet lalu coba lagi.");return}
+var wb=new ExcelJS.Workbook();wb.creator="Buku Surat TU";
+var ln={style:"thin",color:{argb:"FF6F8C7D"}},bd={top:ln,left:ln,bottom:ln,right:ln};
+var cetak=new Date().toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
+var D=function(s){if(!s)return"";var q=s.split("-");return new Date(Date.UTC(+q[0],+q[1]-1,+q[2]))};
+function sheet(name,title,type,cols){
+var n=cols.length,ws=wb.addWorksheet(name,{views:[{state:"frozen",ySplit:5}],pageSetup:{paperSize:9,orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0}});
+cols.forEach(function(c,i){ws.getColumn(i+1).width=c.w});
+[[S.set.name,15,true],[title,13,true],["Dicetak "+cetak+"  |  Semua tahun ajaran  |  Tahun ajaran aktif "+S.active,10,false]].forEach(function(t,i){ws.mergeCells(i+1,1,i+1,n);var c=ws.getCell(i+1,1);c.value=t[0];c.font={bold:t[2],size:t[1],color:{argb:"FF0A3D2A"}};c.alignment={horizontal:"left",vertical:"middle"}});
+ws.getRow(1).height=24;ws.getRow(2).height=22;
+var hr=ws.getRow(5);hr.height=28;
+cols.forEach(function(c,i){var k=hr.getCell(i+1);k.value=c.h;k.font={bold:true,color:{argb:"FFFFFFFF"}};k.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0A3D2A"}};k.alignment={horizontal:"center",vertical:"middle",wrapText:true};k.border=bd});
+var rows=S.items.filter(function(i){return i.type===type}).sort(function(a,b){return (a.tgl||"").localeCompare(b.tgl||"")||a.id-b.id});
+rows.forEach(function(it,x){var r=ws.getRow(6+x);cols.forEach(function(c,i){var k=r.getCell(i+1);k.value=c.f(it,x);k.border=bd;k.alignment={vertical:"top",wrapText:true,horizontal:c.a||"left"};if(c.d)k.numFmt="dd/mm/yyyy";if(x%2)k.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFEEF5F1"}}})});
+ws.autoFilter={from:{row:5,column:1},to:{row:5,column:n}};
+ws.pageSetup.printTitlesRow="5:5";
+}
+var base=[{h:"No",w:6,a:"center",f:function(it,x){return x+1}},{h:"Tahun Ajaran",w:14,a:"center",f:function(it){return it.ta||""}},{h:"Nomor Surat",w:28,f:function(it){return it.no}},{h:"Tanggal Surat",w:14,a:"center",d:1,f:function(it){return D(it.tgl)}}];
+var tail=[{h:"Perihal",w:40,f:function(it){return it.perihal}},{h:"Jenis Surat",w:18,f:function(it){return it.kat}},{h:"Status",w:14,a:"center",f:function(it){return it.status}}];
+sheet("Surat Masuk","BUKU AGENDA SURAT MASUK","masuk",base.concat([{h:"Pengirim",w:28,f:function(it){return it.pihak}}],tail,[{h:"Disposisi Kepada",w:24,f:function(it){return it.dTo||""}},{h:"Catatan Disposisi",w:36,f:function(it){return it.dNote||""}}]));
+sheet("Surat Keluar","BUKU AGENDA SURAT KELUAR","keluar",base.concat([{h:"Ditujukan Kepada",w:28,f:function(it){return it.pihak}}],tail));
+wb.xlsx.writeBuffer().then(function(buf){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));a.download="buku-surat-"+today()+".xlsx";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},3000);toast("File Excel diunduh")}).catch(function(){toast("Gagal membuat file Excel")});
 };
 
 var admin=false;

@@ -1,6 +1,6 @@
 # Buku Surat TU
 
-Aplikasi persuratan sekolah (surat masuk, surat keluar, disposisi, tahun ajaran) satu file HTML dengan database Supabase.
+Aplikasi persuratan sekolah (surat masuk, surat keluar, disposisi, tahun ajaran, ekspor Excel) satu file HTML dengan database Supabase.
 
 ## Isi
 - `index.html`: aplikasi
