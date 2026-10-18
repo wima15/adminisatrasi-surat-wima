@@ -218,22 +218,28 @@ var ROM=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
 var $=function(i){return document.getElementById(i)};
 var editId=null;
 
-function load(){try{var r=localStorage.getItem(KEY);if(r)applyData(JSON.parse(r))}catch(e){}}
+function load(){var r=null,f=null;try{r=localStorage.getItem(KEY)}catch(e){}
+try{if(window.desktop)f=window.desktop.read()}catch(e){}
+try{var pick=f||r;if(pick)applyData(typeof pick==="string"?JSON.parse(pick):pick)}catch(e){}}
+function dsk(){try{if(window.desktop)window.desktop.write(JSON.stringify(snap()))}catch(e){}}
+var PKEY="surat-tu-pending";
+function setPend(v){try{if(v)localStorage.setItem(PKEY,"1");else localStorage.removeItem(PKEY)}catch(e){}}
+function isPend(){try{return localStorage.getItem(PKEY)==="1"}catch(e){return false}}
 function applyData(d){S.items=d.items||[];if(d.years&&d.years.length){S.years=d.years;S.active=d.active||d.years[0]}if(d.set&&d.set.name)S.set=Object.assign({},S.set,d.set);if(d.cats&&d.cats.length)S.cats=d.cats.map(function(c){if(String(c.kode).indexOf("/")>-1){var m=DEF.filter(function(x){return x.name===c.name})[0];c.kode=m?m.kode:"00"}return c})}
 var SB_URL="https://jvunlziapbmvxmrrnphd.supabase.co/rest/v1/app_state",SB_KEY="sb_publishable_g0I7fYBQnCwIrbzub-3FYA_cZXlH6Im",pushT=null,dirty=false;
 function snap(){return{items:S.items,set:S.set,cats:S.cats,years:S.years,active:S.active}}
 function sbSt(t,err){var e=document.getElementById("syncSt");if(e){e.textContent=t;e.style.color=err?"#ffb4a8":""}}
 function sbErr(r){return r.text().then(function(t){throw new Error(r.status+" "+t.slice(0,140))})}
-function push(){dirty=true;clearTimeout(pushT);sbSt("Menyimpan ke Supabase...");pushT=setTimeout(function(){
+function push(){dirty=true;setPend(1);clearTimeout(pushT);sbSt("Menyimpan ke Supabase...");pushT=setTimeout(function(){
 fetch(SB_URL,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({id:"main",data:snap(),updated_at:new Date().toISOString()})})
-.then(function(r){if(!r.ok)return sbErr(r);dirty=false;sbSt("Tersimpan di Supabase")})
-.catch(function(e){sbSt("Gagal menyimpan ke Supabase: "+e.message,1)})},600)}
-function pull(){if(dirty)return;sbSt("Memuat dari Supabase...");
+.then(function(r){if(!r.ok)return sbErr(r);dirty=false;setPend(0);sbSt("Tersimpan di Supabase")})
+.catch(function(e){sbSt(window.desktop?"Offline: data aman di komputer, akan dikirim ke Supabase saat ada koneksi":"Gagal menyimpan ke Supabase: "+e.message,1)})},600)}
+function pull(){if(dirty||isPend()){push();return}sbSt("Memuat dari Supabase...");
 fetch(SB_URL+"?id=eq.main&select=data",{headers:{apikey:SB_KEY}}).then(function(r){return r.ok?r.json():sbErr(r)}).then(function(rows){
-if(rows.length&&rows[0].data){applyData(rows[0].data);try{localStorage.setItem(KEY,JSON.stringify(snap()))}catch(e){}S.items.forEach(function(i){if(!i.ta)i.ta=S.active});S.view=S.active;fillYearSel();render();sbSt("Tersambung ke Supabase")}
+if(rows.length&&rows[0].data){applyData(rows[0].data);try{localStorage.setItem(KEY,JSON.stringify(snap()))}catch(e){}dsk();S.items.forEach(function(i){if(!i.ta)i.ta=S.active});S.view=S.active;fillYearSel();render();sbSt("Tersambung ke Supabase")}
 else{sbSt("Supabase masih kosong, mengirim data awal...");push()}})
-.catch(function(e){sbSt("Tidak tersambung ke Supabase: "+e.message,1)})}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(snap()))}catch(e){}push()}
+.catch(function(e){sbSt(window.desktop?"Offline: memakai data di komputer":"Tidak tersambung ke Supabase: "+e.message,1)})}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(snap()))}catch(e){}dsk();push()}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function fmt(d){if(!d)return"";var p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
 function toast(m){var t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(function(){t.classList.remove("on")},2200)}
@@ -402,7 +408,7 @@ $("aList").addEventListener("click",function(e){var b=e.target.closest("[data-de
 $("aAdd").onclick=function(){var n=$("aName").value.trim(),k=$("aKode").value.trim();if(!n||!k){toast("Isi nama dan kode jenis surat");return}if(catBy(n)){toast("Nama jenis surat sudah ada");return}var sq={};sq[now().y]=Math.max(0,parseInt($("aSeq").value)||0);S.cats.push({name:n,kode:k,pad:Math.min(6,Math.max(1,parseInt($("aPad").value)||3)),seq:sq});save();$("aName").value="";$("aKode").value="";$("aSeq").value=0;renderAdmin();toast("Jenis surat ditambahkan")};
 
 load();S.view=S.active;S.items.forEach(function(i){if(!i.ta)i.ta=S.active});fillYearSel();fillStatusSelect($("fStatus"),"masuk",true);render();
-pull();document.addEventListener("visibilitychange",function(){if(!document.hidden)pull()});
+pull();document.addEventListener("visibilitychange",function(){if(!document.hidden)pull()});window.addEventListener("online",pull);
 })();
 </script>
 </body>

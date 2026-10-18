@@ -1,0 +1,45 @@
+{
+  "name": "buku-surat-tu",
+  "productName": "Buku Surat TU",
+  "version": "1.0.0",
+  "description": "Buku Surat TU SMK Widya Mandala Tambak (aplikasi Windows, data tersimpan di komputer)",
+  "author": "SMK Widya Mandala Tambak",
+  "main": "electron/main.js",
+  "scripts": {
+    "prepare-app": "node scripts/prepare-app.js",
+    "start": "npm run prepare-app && electron .",
+    "dist": "npm run prepare-app && electron-builder --win --publish never"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8",
+    "exceljs": "4.4.0"
+  },
+  "build": {
+    "appId": "id.sch.smkwidyamandala.bukusurattu",
+    "productName": "Buku Surat TU",
+    "copyright": "SMK Widya Mandala Tambak",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["electron/**/*", "app/**/*", "package.json"],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Buku Surat TU",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Buku-Surat-TU-Setup-${version}.${ext}"
+    },
+    "portable": { "artifactName": "Buku-Surat-TU-Portable-${version}.${ext}" }
+  }
+}

@@ -17,3 +17,21 @@ Di `index.html`, cari `SB_URL` dan `SB_KEY`, lalu ganti dengan alamat proyek dan
 
 ## Portal admin
 Kata sandi bawaan `admin123`. Cari `admin123` di `index.html` untuk menggantinya. Kata sandi ini tampil di kode halaman, jadi hanya pengaman ringan.
+
+## Aplikasi Windows (offline)
+Aplikasi desktop dibuat dengan Electron lewat GitHub Actions (`.github/workflows/build-windows.yml`).
+
+**Cara membuat file .exe**
+1. Di GitHub, buka tab **Actions** > **Build aplikasi Windows** > **Run workflow**.
+2. Tunggu sekitar 3 sampai 5 menit sampai hijau, lalu buka run tersebut dan unduh artifact **Buku-Surat-TU-Windows** (isinya `Buku-Surat-TU-Setup-x.x.x.exe` untuk dipasang dan `Buku-Surat-TU-Portable-x.x.x.exe` tanpa pemasangan).
+3. Alternatif: buat tag `v1.0.0` (atau `v1.0.1`, dst). File `.exe` otomatis muncul di halaman **Releases**.
+
+**Penyimpanan data di komputer**
+- Data disimpan di `Dokumen\Buku Surat TU\buku-surat-data.json` (versi portable: folder `Data Buku Surat TU` di samping file .exe).
+- Cadangan harian otomatis di subfolder `cadangan` (30 hari terakhir).
+- Menu **Berkas** > *Pilih folder penyimpanan data* untuk pindah ke drive D: atau flashdisk, serta *Simpan/Pulihkan cadangan*.
+- Tanpa internet, aplikasi tetap bisa dipakai penuh (termasuk ekspor Excel dan cetak). Perubahan yang dibuat offline dikirim ke Supabase otomatis saat koneksi kembali.
+
+**Ganti ikon**: timpa `desktop/build/icon.ico` dan `desktop/build/icon.png`.
+
+Catatan: file .exe belum bertanda tangan digital, jadi Windows SmartScreen bisa menampilkan peringatan. Klik *More info* lalu *Run anyway*.
